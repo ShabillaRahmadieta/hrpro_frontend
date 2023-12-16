@@ -1,0 +1,154 @@
+import 'dart:developer';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:iconsax/iconsax.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:lottie/lottie.dart';
+import 'package:hrpro_task_frontend/application/routes/routes.dart';
+import 'package:hrpro_task_frontend/business_logic/sign_up_screen/sign_up_screen_bloc.dart';
+import 'package:hrpro_task_frontend/presentation/widgets/message_snackbar.dart';
+
+// import '../../../utils/colors/colors.dart';
+import '../../widgets/export_common_widgets.dart';
+
+class SignUpScreen extends StatelessWidget {
+  const SignUpScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    Size size = MediaQuery.of(context).size;
+    final signupBloc = context.read<SignUpScreenBloc>();
+    return Scaffold(
+      body: Stack(
+        children: [
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Hero(
+                tag: 'test',
+                child: Container(
+                  constraints: BoxConstraints(maxWidth: size.width * 0.8),
+                  decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: SingleChildScrollView(
+                      child: Form(
+                        key: signupBloc.formkey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            LottieBuilder.asset('assets/lottie/login.json',
+                                height: size.width * 0.5),
+                            Material(
+                              child: Text(
+                                'Sign-Up',
+                                style: TextStyle(
+                                    color: Theme.of(context).primaryColor,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                            Space.y(10),
+                            CustomTextFormField(
+                              keyboardType: TextInputType.name,
+                              hintText: 'Name',
+                              controller: signupBloc.nameController,
+                              prefixIcon: Iconsax.user,
+                            ),
+                            CustomTextFormField(
+                              keyboardType: TextInputType.emailAddress,
+                              hintText: 'e-mail',
+                              controller: signupBloc.emailController,
+                              prefixIcon: Iconsax.sms,
+                            ),
+                            CustomTextFormField(
+                              keyboardType: TextInputType.text,
+                              hintText: 'Password',
+                              controller: signupBloc.passwordController,
+                              prefixIcon: Iconsax.lock,
+                            ),
+                            BlocConsumer<SignUpScreenBloc, SignUpScreenState>(
+                              listener: (context, state) {
+                                log(state.hasError.toString());
+                                log("${state.signUpRespModel?.message}");
+                                if (state.hasError) {
+                                  messageSnackbar(
+                                      context: context,
+                                      message: "Error while signup");
+                                } else {
+                                  if (state.signUpRespModel?.message ==
+                                      'Account created successfully') {
+                                    messageSnackbar(
+                                        context: context,
+                                        message:
+                                            state.signUpRespModel!.message!,
+                                        isError: false);
+                                    Navigator.of(context)
+                                        .pushNamedAndRemoveUntil(
+                                            ScreenRoutes.login,
+                                            (route) => false);
+                                  } else {
+                                    messageSnackbar(
+                                      context: context,
+                                      message:
+                                          state.signUpRespModel?.message ?? '',
+                                    );
+                                  }
+                                }
+                              },
+                              builder: (context, state) {
+                                if (state.isLoading) {
+                                  return Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(10.0),
+                                      child: LoadingAnimationWidget.inkDrop(
+                                          color: Colors.indigo, size: 25),
+                                    ),
+                                  );
+                                }
+                                return CustomElevatedButton(
+                                  buttonLabel: "Signup",
+                                  onPressed: () {
+                                    if (signupBloc.formkey.currentState!
+                                        .validate()) {
+                                      signupBloc.add(const SignUp());
+                                    }
+                                  },
+                                );
+                              },
+                            ),
+                            Space.y(10),
+                            const Material(
+                                child: Text("Already have an account?")),
+                            Material(
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.of(context)
+                                      .pushReplacementNamed(ScreenRoutes.login);
+                                },
+                                child: const Text(
+                                  'Sign In',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w900,
+                                      color: Colors.indigo),
+                                ),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
